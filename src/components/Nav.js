@@ -15,12 +15,9 @@ class TopNav extends Component {
                 {/* <!-- Container wrapper --> */}
                 <div className="container-fluid">
                     <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                    <Navbar.Brand href="#home"><h1 className="text-light"><BsCurrencyExchange/>  &nbsp;&nbsp; TRADING BOT</h1>
-
-
-</Navbar.Brand>
+                        <Navbar.Brand href="#home"><h1 className="text-light"><BsCurrencyExchange/>  &nbsp;&nbsp;NEWEST TOKENS</h1>
+                        </Navbar.Brand>
                     </div>
-                  
                 </div>
                 </nav>
         );
