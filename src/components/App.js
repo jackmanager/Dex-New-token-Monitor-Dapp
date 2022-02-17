@@ -6,14 +6,12 @@ import './App.css';
 import TopNav from './Nav';
 import {bscRPC, ERC20ABI,ROUTERABI, bnbAddress, routerAddress, factoryAddress, etherscanAPIKey, FactoryABI, usdtAddress} from './config'
 import { BsCardChecklist } from 'react-icons/bs';
-import abiDecoder from  'abi-decoder'
-import { hashMessage } from 'ethers/lib/utils';
-const ethers = require('ethers')
-
-
+// In a node environment
+const Moralis = require('moralis');
+const serverUrl = "https://l2xpqkgp20cn.usemoralis.com:2053/server";
+const appId = "ZYDMZACAxoVYw7P65iT0uyY4LMUDL41DPk54fmcJ";
 
 let web3 = new Web3(bscRPC);
-const provider = new ethers.providers.JsonRpcProvider(bscRPC);
 const factoryContract =  new web3.eth.Contract(FactoryABI,factoryAddress);
 const wethContract    =  new web3.eth.Contract(ERC20ABI, bnbAddress)
 const routerContract  =  new web3.eth.Contract(ROUTERABI, routerAddress)
@@ -33,257 +31,206 @@ class App extends Component {
 
 
   async componentWillMount() {
-    await this.start()
+    Moralis.start({ serverUrl, appId });
+    await this.listening()
   }
 
-
-
-
-
-  async start(){
-    setInterval(() => {
-      this.Listening()
-    }, 3000);
-  }
-
-  async Listening(){
-    
-    let blocknumber = await web3.eth.getBlockNumber() - 5
-
+  async listening(){
+    let blocknumber = await web3.eth.getBlockNumber() - 1000
     let eventarray = await factoryContract.getPastEvents('PairCreated',{
       fromBlock : blocknumber,
       toBlock : 'latest'
     })
-    eventarray = eventarray[0]
-    console.log(eventarray)
+    let tokenAddress
+    let hash 
+    let currentblocknumber
+    
+    for (let index = 0; index < eventarray.length; index++) {
+      let tableData = {
+        id              : '',
+        tokeninfo       : '',
+        tokenAddress    : '',
+        hash            : '',
+        releaseDate     : '',
+        verifyStatus    : '',
+        honeyPotStatus  : '',
+        mintStatus      : '',
+        taxStatus       : '',
+        renounceStatus  : '',
+        liquidityStatus : '',
+        liquidityAmount : '',
+        owner           : '',
+        supply          : '',
+        traded          : '',
+        txCount         : '',
+      }
 
-    try{
-          let id
-          let tokenAddress
-          let bnbAmount    
-          let tokenName
-          let tokenTitle
-          let verifyStatus
-          let honeyPotStatus
-          let mintStatus
-          let taxStatus
-          let buyTax
-          let sellTax
-          let renounceStatus
-          let liquidityStatus
-          let liquidityAmount
-          let hash
-          let owner
-          let supply
-          let traded
-          let txCount
-          let releaseDate
-          let tableDatas
-          let tableData
-
-         
-          eventarray.returnValues[0] == bnbAddress? tokenAddress = eventarray.returnValues[1]: tokenAddress = eventarray.returnValues[0]
-
-          console.log(tokenAddress)
-
-      
-
-            if (tokenAddress !== this.state.prevToken){
-             
-              this.setState({
-                prevToken : tokenAddress
-              })
-
-              let tokenContract=  new web3.eth.Contract(ERC20ABI,tokenAddress);
-              id = this.state.tableDatas.length + 1
-              tokenName    = await tokenContract.methods.symbol().call()
-              tokenTitle    = await tokenContract.methods.name().call()
-              hash =  eventarray.transactionHash
-              console.log(tokenName, tokenTitle)
-              tableDatas = this.state.tableDatas
-              tableData = {
-                id              : id,
-                tokenName       : tokenName,
-                tokenTitle      : tokenTitle,
-                tokenAddress    : tokenAddress,
-                hash            : '',
-                releaseDate     : '',
-                verifyStatus    : '',
-                honeyPotStatus  : '',
-                mintStatus      : '',
-                taxStatus       : '',
-                renounceStatus  : '',
-                liquidityStatus : '',
-                liquidityAmount : '',
-                owner           : '',
-                supply          : '',
-                traded          : '',
-                txCount         : '',
-              }
-  
-              tableDatas.push(tableData)
-  
-              this.setState({
-                tabledatas : tableDatas
-              })
-
-  // verify check
-
-                try{
-                  let bscURL = 'https://api.etherscan.com/api?module=contract&action=getsourcecode&address=' + tokenAddress + '&apikey=' + etherscanAPIKey;
-                  await fetch (bscURL)
-                  .then(response => response.json())
-                  .then(
-                    async(response)=> {
-                        if (response['result']['0']['ABI'] === "Contract source code not verified") {
-                          verifyStatus = false
-                        } else {
-                          verifyStatus = true
-                        }
-                  })
-                }catch(err){
-                  verifyStatus = false
-                } 
-
-  // honeypot check 
-
-                try{
-                  let honeypot_url = 'https://aywt3wreda.execute-api.eu-west-1.amazonaws.com/default/IsHoneypot?chain=eth&token=' + tokenAddress 
-                  await fetch(honeypot_url)
-                  .then(response => response.json())
-                  .then(
-                    async (response) => { 
-                        honeyPotStatus = !response.IsHoneypot
-                        buyTax = response.BuyTax
-                        sellTax = response.SellTax
-                  })
-                }catch(err){
-                  honeyPotStatus = false
-                }
-  
-  // mint check
-              
-                try{
-                    const url = 'https://api.etherscan.com/api?module=contract&action=getsourcecode&address=' + tokenAddress + '&apikey=' + etherscanAPIKey;
-                    await fetch(url)
-                      .then(res => res.json())
-                      .then(
-                        async (res) => {
-                          if (res['result']['0']['SourceCode'].includes('mint')||res['result']['0']['SourceCode'].includes('Mint')) {
-                            mintStatus =false
-                          } else {
-                            mintStatus =true
-                          }
-                        })
-                
-                }catch(err){
-                  mintStatus = false
-                }
-  
-  // renounce check                      
-                try{
-                  
-                    let ownerAddress = ''
-  
-                    try {
-                      ownerAddress = await tokenContract.methods.owner().call()
-                    }catch(err){
-                      try{
-                        ownerAddress = await tokenContract.methods.Owner().call()
-                      }catch(err){
-                        try{
-                          ownerAddress = await tokenContract.methods.ownerOf().call()
-                        }catch(err){
-                        }
-                      }  
-                    }
-                    owner = ownerAddress
-                    if (ownerAddress === ''||ownerAddress === '0x0000000000000000000000000000000000000000'){
-                      renounceStatus = false
-                    } else {
-                      renounceStatus = true
-                    }
-                }catch(err){
-                  renounceStatus =false
-                }
-  
-  // liquidity check
-                try{
-                  
-  
-                  let poolAddress     = await factoryContract.methods.getPair(tokenAddress, bnbAddress).call()
-                  console.log("pooladdress", poolAddress)
-  
-                  let ethliquidityAmount =  await wethContract.methods.balanceOf(poolAddress).call()
-                  ethliquidityAmount = (ethliquidityAmount / 1000000000000000000)
-                  let usdliquidityAmount =  await routerContract.methods.getAmountsOut(ethers.BigNumber.from("1000000000000000000"), [bnbAddress,usdtAddress]).call()
-                  liquidityAmount = (usdliquidityAmount[1] * ethliquidityAmount/ 500000).toFixed(2) 
-                }catch(err){
-                }
-  
-  // total supply check
-  
-              try{
-                  const url = 'https://api.etherscan.io/api?module=stats&action=tokensupply&contractaddress=' + tokenAddress + '&apikey=' + etherscanAPIKey;
-                  await fetch(url)
-                    .then(res => res.json())
-                    .then(
-                      async (res) => {
-                        console.log(res)
-                        let tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress)
-                        let decimals = await tokenContract.methods.decimals().call()
-                        supply = (res.result / Math.pow(10, decimals)).toFixed(3)
-                      })
-              }catch(err){
-                supply =  " can't catch "
-              }
-  // mint check
-              try{
-                  const url = 'https://api.etherscan.com/api?module=contract&action=getsourcecode&address=' + tokenAddress + '&apikey=' + etherscanAPIKey;
-                  await fetch(url)
-                    .then(res => res.json())
-                    .then(
-                      async (res) => {
-                        if (res['result']['0']['SourceCode'].includes('mint')||res['result']['0']['SourceCode'].includes('Mint')) {
-                          mintStatus =false
-                        } else {
-                          mintStatus =true
-                        }
-                      })
-              }catch(err){
-                mintStatus = false
-              }
-  
-  // transaction count check 
-              try{
-                console.log("1111111111111111111111111")
-                txCount = await web3.eth.getTransactionCount(tokenAddress)
-                console.log("22222222222222",txCount)
-              }catch(err){
-                console.log(err)
-              }
-              
-              tableDatas = this.state.tableDatas
-              
-              tableDatas[id-1].hash = <a href = {"https://etherscan.io/tx/" + hash} target  = "_blank">{hash}</a>
-              tableDatas[id-1].liquidityStatus = liquidityAmount + '$'
-              tableDatas[id-1].supply = supply
-              tableDatas[id-1].taxStatus = 'Buy Tax : ' + buyTax  + ', Sell Tax :' + sellTax
-              tableDatas[id-1].owner = owner
-              tableDatas[id-1].txCount = txCount
-              mintStatus ? tableDatas[id-1 ].mintStatus = <p className='text-success'> Non-Mintable </p> :  tableDatas[id -1 ].mintStatus = <p className='text-danger'> Mintable </p> 
-              verifyStatus?  tableDatas[id-1].verifyStatus = <p className='text-success'> Verified </p> :  tableDatas[id-1].verifyStatus = <p className='text-danger'> Unverified </p> 
-              honeyPotStatus ? tableDatas[id-1].honeyPotStatus = <p className='text-success'> Good </p> : tableDatas[id-1].honeyPotStatus = <p className='text-danger'> HoneyPot </p>
-              mintStatus ? tableDatas[id-1 ].mintStatus = <p className='text-success'> Non-Mintable </p> :  tableDatas[id -1 ].mintStatus = <p className='text-danger'> Mintable </p> 
-              renounceStatus ? tableDatas[id-1 ].renounceStatus = <p className='text-success'> Good </p> : tableDatas[id -1 ].renounceStatus =  <p className='text-danger'> renounced </p>
-              
-              this.setState({
-                tabledatas : tableDatas
-              })
-            }       
-    }catch(err){
-      return
+      let tableDatas = this.state.tableDatas
+      tableDatas.push(tableData)
+      this.setState({
+        tableDatas : tableDatas
+      })
+      eventarray[eventarray.length - index -1].returnValues[0] == bnbAddress? tokenAddress = eventarray[eventarray.length - index -1].returnValues[1]: tokenAddress = eventarray[eventarray.length - index -1].returnValues[0]
+      hash =  eventarray[eventarray.length - index -1].transactionHash
+      currentblocknumber = eventarray[eventarray.length - index -1].blockNumber
+      this.getDate(tokenAddress, hash, index)
+      console.log(eventarray)
     }
+  }
+
+  async getDate(tokenAddress, hash, id){
+    try{
+      let tokenName
+      let tokenTitle
+      let verifyStatus
+      let honeyPotStatus
+      let mintStatus
+      let buyTax
+      let sellTax
+      let renounceStatus
+      let liquidityAmount
+      let owner
+      let supply
+      let traded
+      let txCount
+      let releaseDate
+      let tableDatas
+      let tableData
+
+
+
+
+
+          let tokenContract=  new web3.eth.Contract(ERC20ABI,tokenAddress);
+          tokenName    = await tokenContract.methods.symbol().call()
+          tokenTitle    = await tokenContract.methods.name().call()
+         
+// verify check,  mint check
+            try{
+              let bscURL = 'https://api.etherscan.com/api?module=contract&action=getsourcecode&address=' + tokenAddress + '&apikey=' + etherscanAPIKey;
+              await fetch (bscURL)
+              .then(response => response.json())
+              .then(
+                async(response)=> {
+                  try{
+                    if (response['result']['0']['ABI'] === "Contract source code not verified") {
+                      verifyStatus = false
+                    } else {
+                      verifyStatus = true
+                    }
+                  }catch(err){
+                    verifyStatus = false
+                  }
+
+                  try{
+                    if (response['result']['0']['SourceCode'].includes('mint')||response['result']['0']['SourceCode'].includes('Mint')) {
+                      mintStatus =false
+                    } else {
+                      mintStatus =true
+                    }
+                  }catch(err){
+                    mintStatus = false
+                  }   
+              })
+            }catch(err){
+              verifyStatus = false
+              mintStatus = false
+            } 
+
+// honeypot check 
+            try{
+              let honeypot_url = 'https://aywt3wreda.execute-api.eu-west-1.amazonaws.com/default/IsHoneypot?chain=eth&token=' + tokenAddress 
+              await fetch(honeypot_url)
+              .then(response => response.json())
+              .then(
+                async (response) => { 
+                    honeyPotStatus = !response.IsHoneypot
+                    buyTax = response.BuyTax
+                    sellTax = response.SellTax
+              })
+            }catch(err){
+              honeyPotStatus = false
+            }
+
+// renounce check        
+
+            try{
+                try {
+                  owner = await tokenContract.methods.owner().call()
+                  console.log(owner)
+                }catch(err){
+                  owner = ""
+                }
+                if (owner === ''||owner === '0x0000000000000000000000000000000000000000'){
+                  renounceStatus = false
+                } else {
+                  renounceStatus = true
+                }
+            }catch(err){
+              renounceStatus =false
+            }
+
+// liquidity check
+
+            try{
+              let poolAddress     = await factoryContract.methods.getPair(tokenAddress, bnbAddress).call()
+              let ethliquidityAmount =  await wethContract.methods.balanceOf(poolAddress).call()
+              ethliquidityAmount = (ethliquidityAmount / 1000000000000000000)
+              let usdliquidityAmount =  await routerContract.methods.getAmountsOut("1000000000000000000", [bnbAddress,usdtAddress]).call()
+              liquidityAmount = (usdliquidityAmount[1] * ethliquidityAmount/ 500000).toFixed(2) 
+            }catch(err){
+            }
+
+// total supply check
+          try{
+              supply = await tokenContract.methods.totalSupply().call()
+              supply = supply / 1
+              console.log(supply)
+          }catch(err){
+            supply =  " can't catch "
+          }
+
+// transaction count check 
+          try{
+            txCount = await web3.eth.getTransactionCount(tokenAddress)
+            console.log('transaction', txCount)
+          }catch(err){
+            console.log(err)
+          }
+// get timestamp 
+          const options = {
+            chain: "eth",
+            transaction_hash: hash
+          };
+
+          const transaction = await Moralis.Web3API.native.getTransaction(options)
+          releaseDate = transaction.block_timestamp
+          
+          tableDatas = this.state.tableDatas
+          
+
+          tableDatas[id].id = id + 1
+          tableDatas[id].tokeninfo = tokenTitle + '(' + tokenName + ')'
+          tableDatas[id].tokenAddress = <a href = {"https://etherscan.io/address/" + tokenAddress} target  = "_blank">{tokenAddress.slice(0,6)}...{tokenAddress.slice(tokenAddress.length -4 ,tokenAddress.length- 1)}</a>
+          tableDatas[id].hash = <a href = {"https://etherscan.io/tx/" + hash} target  = "_blank">{hash.slice(0,6)}...{hash.slice(hash.length -4 ,hash.length- 1)}</a>
+          tableDatas[id].liquidityStatus = liquidityAmount + '$'
+          tableDatas[id].supply = supply
+          tableDatas[id].taxStatus = <p className='text-success'> Sell tax:{sellTax}, Buy Tax:{buyTax} </p>
+          tableDatas[id].owner = <a href = {"https://etherscan.io/address/" + owner} target  = "_blank">{owner.slice(0,6)}...{owner.slice(owner.length -4 ,owner.length- 1)}</a>
+          tableDatas[id].txCount = txCount
+          tableDatas[id].releaseDate = releaseDate.slice(0,10) + ' ' + releaseDate.slice(11,19)
+          mintStatus ? tableDatas[id].mintStatus = <p className='text-success'> Non-Mintable </p> :  tableDatas[id].mintStatus = <p className='text-danger'> Mintable </p> 
+          verifyStatus?  tableDatas[id].verifyStatus = <p className='text-success'> Verified </p> :  tableDatas[id].verifyStatus = <p className='text-danger'> Unverified </p> 
+          honeyPotStatus ? tableDatas[id].honeyPotStatus = <p className='text-success'> Good </p> : tableDatas[id].honeyPotStatus = <p className='text-danger'> HoneyPot </p>
+          mintStatus ? tableDatas[id].mintStatus = <p className='text-success'> Non-Mintable </p> :  tableDatas[id].mintStatus = <p className='text-danger'> Mintable </p> 
+          renounceStatus ? tableDatas[id].renounceStatus = <p className='text-success'> Good </p> : tableDatas[id].renounceStatus =  <p className='text-danger'> renounced </p>
+          this.setState({
+            tabledatas : tableDatas
+          }) 
+
+}catch(err){
+  return
+}
   }
 
 
@@ -299,15 +246,11 @@ class App extends Component {
           sort  : 'asc'
         },
         {
-          label : 'Token Symbol',
-          field : 'tokenName',
+          label : 'Token',
+          field : 'tokeninfo',
         },
         {
-          label : 'Token Name',
-          field : 'tokenTitle',
-        },
-        {
-          label : 'Token Address',
+          label : 'Address',
           field : 'tokenAddress',
         },
         {
@@ -335,7 +278,7 @@ class App extends Component {
           field : 'liquidityStatus',
         },
         {
-          label : 'Hash Link',
+          label : 'Hash',
           field : 'hash',
         },
         {
@@ -343,15 +286,15 @@ class App extends Component {
           field : 'owner',
         },
         {
-          label : 'Total Supply',
+          label : 'Supply',
           field : 'supply',
         },
         {
-          label : 'Total Volume Traded',
+          label : 'Volume Traded',
           field : 'traded',
         },
         {
-          label : 'Tx Count',
+          label : 'TxCount',
           field : 'txCount',
         },
         {
@@ -368,20 +311,12 @@ class App extends Component {
     return (
       <div>
         <TopNav/><br/><br/>
-
-        <div className = "row">
-          <div className = "col-1"></div>
-          <div className = "col-10">
-            <Card  bg="light" style={{ height: '100%'}} >
+            <Card  bg="light" style={{ height: '96%', width : '100%', align : 'center'}} >
               <Card.Body>
                 <Card.Title><h2> <BsCardChecklist/> &nbsp; Newest Token Table </h2> <hr/></Card.Title><br/>
-                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={captureDataTable}  materialSearch /><br/><br/>
+                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={100} pagesAmount={300} data={captureDataTable}  materialSearch /><br/><br/>
               </Card.Body>
             </Card>
-          </div>
-          <div className = "col-1"></div>
-        </div>
-
       </div>
     );
   }
