@@ -29,19 +29,19 @@ class App extends Component {
       }
     }
 
-
     async componentWillMount() {
         Moralis.start({ serverUrl, appId });
-        await this.initialListing(500)
+        await this.initialListing(2000)
         setInterval(() => {
           this.realTimeScanning(1)
-        }, 5000);
-        // setInterval(() => {
-        //   this.realTimeUpdate()
-        // }, 3000);
+        }, 10000);
+        setInterval(() => {
+          this.realTimeUpdate()
+        }, 10000);
     }
 
     async initialListing(number){
+      console.log("initial token scanning!")
         let blocknumber = await web3.eth.getBlockNumber() - number
         let eventarray = await factoryContract.getPastEvents('PairCreated',{
           fromBlock : blocknumber,
@@ -63,8 +63,10 @@ class App extends Component {
             hash            : hash,
             releaseDate     : '',
             verifyStatus    : '',
+            verifyStatusDis : '',
             honeyPotStatus  : '',
             mintStatus      : '',
+            mintStatusDis   : '',
             taxStatus       : '',
             renounceStatus  : '',
             liquidityStatus : '',
@@ -88,6 +90,7 @@ class App extends Component {
     }
 
     async realTimeScanning(number){
+        console.log("real time token scanning")
         let tokenAddress
         let hash 
         let pairAddress
@@ -96,10 +99,13 @@ class App extends Component {
             fromBlock : blocknumber,
             toBlock : 'latest'
         })
+        
 
         if(eventarray.length === 0){
+            console.log("new token scanning result: nothing")
             return
         } else {
+            console.log("new token scanning result: ", eventarray.length)
             for (let index = 0; index < eventarray.length; index++) {
                 hash =  eventarray[index].transactionHash       
                 if (hash === this.state.tableDatas[0].hash){
@@ -117,8 +123,10 @@ class App extends Component {
                   hash            : hash,
                   releaseDate     : '',
                   verifyStatus    : '',
+                  verifyStatusDis : '',
                   honeyPotStatus  : '',
                   mintStatus      : '',
+                  mintStatusDis   : '',
                   taxStatus       : '',
                   renounceStatus  : '',
                   liquidityStatus : '',
@@ -136,13 +144,13 @@ class App extends Component {
                 this.setState({
                   tableDatas : tableDatas
                 })
-                
                 this.getData(tokenAddress, hash,  this.state.tableDatas.length - 1, pairAddress)
             }
         }
     }
 
     async realTimeUpdate(){
+        console.log("data update!")
         for (let i = 0; i < this.state.tableDatas.length; i++) {
             this.getData(this.state.tableDatas[i].tokenAddress, this.state.tableDatas[i].hash, this.state.tableDatas[i].id, this.state.tableDatas[i].pairAddress)
             console.log(i)
@@ -173,49 +181,117 @@ class App extends Component {
             tokenTitle    = await tokenContract.methods.name().call()   
             tableDatas = this.state.tableDatas
 
-            tableDatas[this.state.tableDatas.length - id - 1].id = this.state.tableDatas.length - id - 1
-            tableDatas[this.state.tableDatas.length - id - 1].tokeninfo = tokenTitle + '(' + tokenName + ')'
+            tableDatas[this.state.tableDatas.length - id - 1].tokeninfo = tokenTitle + '  (' + tokenName + ')'
             tableDatas[this.state.tableDatas.length - id - 1].tokenAddressDis = <a href = {"https://etherscan.io/address/" + tokenAddress} target  = "_blank">{tokenAddress.slice(0,5)}...{tokenAddress.slice(tokenAddress.length -3 ,tokenAddress.length)}</a>
             tableDatas[this.state.tableDatas.length - id - 1].hashDis = <a href = {"https://etherscan.io/tx/" + hash} target  = "_blank">{hash.slice(0,5)}...{hash.slice(hash.length -3 ,hash.length)}</a>
             this.setState({
                 tabledatas : tableDatas
             })
 
-  // verify check,  mint check ===============================================================
+  // get timestamp 
             try{
-                let bscURL = 'https://api.etherscan.com/api?module=contract&action=getsourcecode&address=' + tokenAddress + '&apikey=' + etherscanAPIKey;
-                await fetch (bscURL)
-                .then(response => response.json())
-                .then(
-                    async(response)=> {
-                        try{
-                            if (response['result']['0']['ABI'] === "Contract source code not verified") {
-                                verifyStatus = false
-                            } else {
-                                verifyStatus = true
-                            }
-                        }catch(err){
-                            verifyStatus = false
-                        }
-
-                        try{
-                            if (response['result']['0']['SourceCode'].includes('mint')||response['result']['0']['SourceCode'].includes('Mint')) {
-                                mintStatus =false
-                            } else {
-                                mintStatus =true
-                            }
-                        }catch(err){
-                            mintStatus = false
-                        }   
+                const options = {
+                    chain: "eth",
+                    transaction_hash: hash
+                };
+                const transaction = await Moralis.Web3API.native.getTransaction(options)
+                releaseDate = transaction.block_timestamp
+                tableDatas = this.state.tableDatas
+                tableDatas[this.state.tableDatas.length - id - 1].releaseDate = releaseDate.slice(0,10) + ' ' + releaseDate.slice(11,19)
+                this.setState({
+                    tabledatas : tableDatas
                 })
             }catch(err){
+
+            }
+
+// renounce check      ============================================================  
+
+             try{
+                try {
+                    owner = await tokenContract.methods.owner().call()
+                }catch(err){
+                    owner = ""
+                }
+                if (owner === ''||owner === '0x0000000000000000000000000000000000000000'){
+                    renounceStatus = false
+                } else {
+                    renounceStatus = true
+                }
+              }catch(err){
+                  renounceStatus =false
+              }    
+              tableDatas = this.state.tableDatas
+              renounceStatus ? tableDatas[this.state.tableDatas.length - id - 1].renounceStatus = <p className='text-success'> Good </p> : tableDatas[this.state.tableDatas.length - id - 1].renounceStatus =  <p className='text-danger'> renounced </p>
+              owner === ''?tableDatas[this.state.tableDatas.length - id - 1].owner = <p className='text-warning'> Unknown </p>:tableDatas[this.state.tableDatas.length - id - 1].owner = <a href = {"https://etherscan.io/address/" + owner} target  = "_blank">{owner.slice(0,6)}...{owner.slice(owner.length -3 ,owner.length)}</a>
+              this.setState({
+                tabledatas : tableDatas
+              })
+   
+              
+// total supply check
+              try{
+                  supply = await tokenContract.methods.totalSupply().call()
+                  supply = supply / 1
+              }catch(err){
+                  supply =  " can't catch "
+              }
+
+              
+              tableDatas = this.state.tableDatas
+              tableDatas[this.state.tableDatas.length - id - 1].supply = supply.toExponential(3)
+              this.setState({
+                  tabledatas : tableDatas
+              })
+
+  // verify check,  mint check ===============================================================
+            try{
+                if( this.state.tableDatas[this.state.tableDatas.length - id - 1].verifyStatus === true) {
+                  verifyStatus = true
+                  mintStatus = this.state.tableDatas[this.state.tableDatas.length - id - 1].mintStatus
+                } else {
+                    let bscURL = 'https://api.etherscan.com/api?module=contract&action=getsourcecode&address=' + tokenAddress + '&apikey=' + etherscanAPIKey;
+                    await fetch (bscURL)
+                    .then(response => response.json())
+                    .then(
+                        async(response)=> {
+                            try{
+                                if (response['result']['0']['ABI'] === "Contract source code not verified") {
+                                    verifyStatus = false
+                                    mintStatus   = "unknown"
+                                } else {
+                                    verifyStatus = true
+                                    try{
+                                        if (response['result']['0']['SourceCode'].includes('mint')||response['result']['0']['SourceCode'].includes('Mint')) {
+                                            mintStatus = "Non-Mintable"
+                                        } else {
+                                            mintStatus ="Mintable"
+                                        }
+                                    }catch(err){
+                                        mintStatus = "Non-mintable"
+                                    }   
+                                }
+                            }catch(err){
+                                verifyStatus = false
+                            }
+                    })
+                } 
+            }catch(err){
               verifyStatus = false
-              mintStatus = false
+              mintStatus = "Non-M"
             } 
 
             tableDatas = this.state.tableDatas
-            mintStatus ? tableDatas[this.state.tableDatas.length - id - 1].mintStatus = <p className='text-success'> Non-Mintable </p> :  tableDatas[this.state.tableDatas.length - id - 1].mintStatus = <p className='text-danger'> Mintable </p> 
-            verifyStatus ? tableDatas[this.state.tableDatas.length - id - 1].verifyStatus = <p className='text-success'> Verified </p> :  tableDatas[this.state.tableDatas.length - id - 1].verifyStatus = <p className='text-danger'> Unverified </p> 
+            tableDatas[this.state.tableDatas.length - id - 1].mintStatus = mintStatus
+            tableDatas[this.state.tableDatas.length - id - 1].verifyStatus = verifyStatus
+            if (mintStatus === 'unknown'){
+                tableDatas[this.state.tableDatas.length - id - 1].mintStatusDis = <p className='text-warning'> Unknown </p> 
+            }else if(mintStatus === 'Non-mintable'){
+                tableDatas[this.state.tableDatas.length - id - 1].mintStatusDis = <p className='text-success'> Non-Mintable </p>
+            } else {
+                tableDatas[this.state.tableDatas.length - id - 1].mintStatusDis = <p className='text-danger'> Mintable </p> 
+            }
+            verifyStatus ? tableDatas[this.state.tableDatas.length - id - 1].verifyStatusDis = <p className='text-success'> Verified </p> :  tableDatas[this.state.tableDatas.length - id - 1].verifyStatusDis = <p className='text-danger'> Unverified </p> 
             this.setState({
                 tabledatas : tableDatas
             })
@@ -244,30 +320,7 @@ class App extends Component {
                 tabledatas : tableDatas
             })
 
-  // renounce check      ============================================================  
-
-            try{
-                try {
-                    owner = await tokenContract.methods.owner().call()
-                }catch(err){
-                    owner = ""
-                }
-                if (owner === ''||owner === '0x0000000000000000000000000000000000000000'){
-                    renounceStatus = false
-                } else {
-                    renounceStatus = true
-                }
-            }catch(err){
-                renounceStatus =false
-            }
-
-              
-            tableDatas = this.state.tableDatas
-            renounceStatus ? tableDatas[this.state.tableDatas.length - id - 1].renounceStatus = <p className='text-success'> Good </p> : tableDatas[this.state.tableDatas.length - id - 1].renounceStatus =  <p className='text-danger'> renounced </p>
-            owner === ''?tableDatas[this.state.tableDatas.length - id - 1].owner = '':tableDatas[this.state.tableDatas.length - id - 1].owner = <a href = {"https://etherscan.io/address/" + owner} target  = "_blank">{owner.slice(0,6)}...{owner.slice(owner.length -3 ,owner.length)}</a>
-            this.setState({
-              tabledatas : tableDatas
-            })
+ 
 
   // liquidity check
             try{
@@ -286,33 +339,10 @@ class App extends Component {
             this.setState({
               tabledatas : tableDatas
             })
-  // total supply check
-            try{
-                supply = await tokenContract.methods.totalSupply().call()
-                supply = supply / 1
-            }catch(err){
-                supply =  " can't catch "
-            }
 
-            
-            tableDatas = this.state.tableDatas
-            tableDatas[this.state.tableDatas.length - id - 1].supply = supply
-            this.setState({
-                tabledatas : tableDatas
-            })
-  // get timestamp 
-            const options = {
-                chain: "eth",
-                transaction_hash: hash
-            };
-            const transaction = await Moralis.Web3API.native.getTransaction(options)
-            releaseDate = transaction.block_timestamp
-            tableDatas = this.state.tableDatas
-            tableDatas[this.state.tableDatas.length - id - 1].releaseDate = releaseDate.slice(0,10) + ' ' + releaseDate.slice(11,19)
-            this.setState({
-                tabledatas : tableDatas
-            })
-  // token transferred count
+
+
+  // token transferred count trad amount
             let transferEventArray = await tokenContract.getPastEvents('Transfer',{
                 fromBlock : 0,
                 toBlock : 'latest'
@@ -354,8 +384,24 @@ class App extends Component {
             field : 'tokenAddressDis',
           },
           {
+            label : 'Hash',
+            field : 'hashDis',
+          },
+          {
+            label : 'Release Date',
+            field : 'releaseDate',
+          },
+          {
+            label : 'Owner',
+            field : 'owner',
+          },
+          {
+            label : 'Supply',
+            field : 'supply',
+          },
+          {
             label : 'Verify',
-            field : 'verifyStatus',
+            field : 'verifyStatusDis',
           },
           {
             label : 'Honeypot',
@@ -363,7 +409,7 @@ class App extends Component {
           },
           {
             label : 'Mint',
-            field : 'mintStatus',
+            field : 'mintStatusDis',
           },
           {
             label : 'Tax',
@@ -378,29 +424,13 @@ class App extends Component {
             field : 'liquidityStatus',
           },
           {
-            label : 'Hash',
-            field : 'hashDis',
-          },
-          {
-            label : 'Owner',
-            field : 'owner',
-          },
-          {
-            label : 'Supply',
-            field : 'supply',
+            label : 'TxCount',
+            field : 'txCount',
           },
           {
             label : 'Volume Traded',
             field : 'traded',
           },
-          {
-            label : 'TxCount',
-            field : 'txCount',
-          },
-          {
-            label : 'Release Date',
-            field : 'releaseDate',
-          }
         ],
         rows : rowsCaptureTable,
       }
