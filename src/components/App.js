@@ -15,7 +15,7 @@ let web3 = new Web3(bscRPC);
 const factoryContract =  new web3.eth.Contract(FactoryABI,factoryAddress);
 const wethContract    =  new web3.eth.Contract(ERC20ABI, bnbAddress)
 const routerContract  =  new web3.eth.Contract(ROUTERABI, routerAddress)
-
+const internationalNumberFormat = new Intl.NumberFormat('en-US')
 
 class App extends Component {
 
@@ -31,10 +31,10 @@ class App extends Component {
 
     async componentWillMount() {
         Moralis.start({ serverUrl, appId });
-        await this.initialListing(2000)
+        await this.initialListing(500)
         setInterval(() => {
-          this.realTimeScanning(1)
-        }, 10000);
+          this.realTimeScanning(2)
+        }, 3000);
         setInterval(() => {
           this.realTimeUpdate()
         }, 10000);
@@ -106,46 +106,44 @@ class App extends Component {
             return
         } else {
             console.log("new token scanning result: ", eventarray.length)
-            for (let index = 0; index < eventarray.length; index++) {
-                hash =  eventarray[index].transactionHash       
-                if (hash === this.state.tableDatas[0].hash){
-                  return
-                }
+            
+                hash =  eventarray[0].transactionHash       
+                if (hash === this.state.tableDatas[0].hash){  
+                } else {
+                    eventarray[0].returnValues[0] === bnbAddress? tokenAddress = eventarray[0].returnValues[1]: tokenAddress = eventarray[0].returnValues[0]
+                    hash =  eventarray[0].transactionHash
+                    pairAddress = eventarray[0].returnValues[2]
 
-                eventarray[index].returnValues[0] === bnbAddress? tokenAddress = eventarray[index].returnValues[1]: tokenAddress = eventarray[index].returnValues[0]
-                hash =  eventarray[index].transactionHash
-                pairAddress = eventarray[index].returnValues[2]
-
-                let tableData = {
-                  id              : this.state.tableDatas.length,
-                  tokeninfo       : '',
-                  tokenAddress    : tokenAddress,
-                  hash            : hash,
-                  releaseDate     : '',
-                  verifyStatus    : '',
-                  verifyStatusDis : '',
-                  honeyPotStatus  : '',
-                  mintStatus      : '',
-                  mintStatusDis   : '',
-                  taxStatus       : '',
-                  renounceStatus  : '',
-                  liquidityStatus : '',
-                  liquidityAmount : '',
-                  owner           : '',
-                  supply          : '',
-                  traded          : '',
-                  txCount         : '',
-                  pairAddress     : pairAddress,
-                  tokenAddressDis : '',
-                  hashDis         : '',
+                    let tableData = {
+                      id              : this.state.tableDatas.length,
+                      tokeninfo       : '',
+                      tokenAddress    : tokenAddress,
+                      hash            : hash,
+                      releaseDate     : '',
+                      verifyStatus    : '',
+                      verifyStatusDis : '',
+                      honeyPotStatus  : '',
+                      mintStatus      : '',
+                      mintStatusDis   : '',
+                      taxStatus       : '',
+                      renounceStatus  : '',
+                      liquidityStatus : '',
+                      liquidityAmount : '',
+                      owner           : '',
+                      supply          : '',
+                      traded          : '',
+                      txCount         : '',
+                      pairAddress     : pairAddress,
+                      tokenAddressDis : '',
+                      hashDis         : '',
+                    }
+                    let tableDatas = this.state.tableDatas
+                    tableDatas.unshift(tableData)
+                    this.setState({
+                      tableDatas : tableDatas
+                    })
+                    this.getData(tokenAddress, hash,  this.state.tableDatas.length - 1, pairAddress)
                 }
-                let tableDatas = this.state.tableDatas
-                tableDatas.unshift(tableData)
-                this.setState({
-                  tableDatas : tableDatas
-                })
-                this.getData(tokenAddress, hash,  this.state.tableDatas.length - 1, pairAddress)
-            }
         }
     }
 
@@ -181,7 +179,7 @@ class App extends Component {
             tokenTitle    = await tokenContract.methods.name().call()   
             tableDatas = this.state.tableDatas
 
-            tableDatas[this.state.tableDatas.length - id - 1].tokeninfo = tokenTitle + '  (' + tokenName + ')'
+            tableDatas[this.state.tableDatas.length - id - 1].tokeninfo = <p>{tokenTitle}<br/>({tokenName})</p> 
             tableDatas[this.state.tableDatas.length - id - 1].tokenAddressDis = <a href = {"https://etherscan.io/address/" + tokenAddress} target  = "_blank">{tokenAddress.slice(0,5)}...{tokenAddress.slice(tokenAddress.length -3 ,tokenAddress.length)}</a>
             tableDatas[this.state.tableDatas.length - id - 1].hashDis = <a href = {"https://etherscan.io/tx/" + hash} target  = "_blank">{hash.slice(0,5)}...{hash.slice(hash.length -3 ,hash.length)}</a>
             this.setState({
@@ -197,7 +195,7 @@ class App extends Component {
                 const transaction = await Moralis.Web3API.native.getTransaction(options)
                 releaseDate = transaction.block_timestamp
                 tableDatas = this.state.tableDatas
-                tableDatas[this.state.tableDatas.length - id - 1].releaseDate = releaseDate.slice(0,10) + ' ' + releaseDate.slice(11,19)
+                tableDatas[this.state.tableDatas.length - id - 1].releaseDate = <p>{releaseDate.slice(0,10)}<br/> {releaseDate.slice(11,19)}</p>
                 this.setState({
                     tabledatas : tableDatas
                 })
@@ -239,7 +237,7 @@ class App extends Component {
 
               
               tableDatas = this.state.tableDatas
-              tableDatas[this.state.tableDatas.length - id - 1].supply = supply.toExponential(3)
+              tableDatas[this.state.tableDatas.length - id - 1].supply = supply.toExponential(2)
               this.setState({
                   tabledatas : tableDatas
               })
@@ -314,7 +312,7 @@ class App extends Component {
             }
             tableDatas = this.state.tableDatas
             honeyPotStatus ? tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatus = <p className='text-success'> Good </p> : tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatus = <p className='text-danger'> HoneyPot </p>
-            tableDatas[this.state.tableDatas.length - id - 1].taxStatus = <p className='text-success'> Sell tax:{sellTax}, Buy Tax:{buyTax} </p>
+            tableDatas[this.state.tableDatas.length - id - 1].taxStatus = <p className='text-success'> Sell tax:{sellTax}% <br/>Buy Tax:{buyTax}% </p>
 
             this.setState({
                 tabledatas : tableDatas
@@ -329,13 +327,15 @@ class App extends Component {
                 ethliquidityAmount = (ethliquidityAmount / 1000000000000000000)
                 let usdliquidityAmount =  await routerContract.methods.getAmountsOut("1000000000000000000", [bnbAddress,usdtAddress]).call()
                 ethPrice = usdliquidityAmount[1] / Math.pow(10,6)
-                liquidityAmount = (usdliquidityAmount[1] * ethliquidityAmount/ 500000).toFixed(2) 
+                liquidityAmount = (usdliquidityAmount[1] * ethliquidityAmount/ 500000).toFixed(0)
+                
+
             }catch(err){
             }
 
               
             tableDatas = this.state.tableDatas
-            tableDatas[this.state.tableDatas.length - id - 1].liquidityStatus = liquidityAmount + '$'
+            tableDatas[this.state.tableDatas.length - id - 1].liquidityStatus = internationalNumberFormat.format(liquidityAmount) + '$'
             this.setState({
               tabledatas : tableDatas
             })
@@ -359,7 +359,7 @@ class App extends Component {
                 }
             }
             txCount = countbuffer
-            traded = (tradedbuffer * ethPrice / Math.pow(10, 18)).toFixed(2)
+            traded = internationalNumberFormat.format((tradedbuffer * ethPrice / Math.pow(10, 18)).toFixed(0))
             tableDatas = this.state.tableDatas
             tableDatas[this.state.tableDatas.length - id - 1].txCount = txCount
             tableDatas[this.state.tableDatas.length - id - 1].traded = traded + '$'
