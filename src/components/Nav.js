@@ -10,7 +10,7 @@ class TopNav extends Component {
     }
     render () {
         return (
-            <nav className="navbar navbar-expand-lg navbar-light bg-dark" style={{  backgroundImage: `url(./topnav.jpg)` , backgroundSize : 'cover'
+            <nav className="navbar navbar-expand-lg navbar-light bg-dark" style={{  backgroundImage: `url(/topnav.jpg)` , backgroundSize : 'cover'
               }} >
                 {/* <!-- Container wrapper --> */}
                 <div className="container-fluid">
