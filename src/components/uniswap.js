@@ -27,16 +27,16 @@ class Uniswap extends Component {
     }
 
     async componentWillMount() {
-        await this.initialListing(1000)
-        setInterval(() => {
-          this.realTimeScanning(2)
-        }, 10000);
-        setInterval(() => {
-          this.realTimeDataUpdate()
-        }, 120000);
-        setInterval(() => {
-          this.realTimeTimerUpdate()
-        }, 2000);
+            await this.initialListing(1000)
+            setInterval(() => {
+              this.realTimeScanning(2)
+            }, 10000);
+            setInterval(() => {
+              this.realTimeDataUpdate()
+            }, 120000);
+            setInterval(() => {
+              this.realTimeTimerUpdate()
+            }, 2000);
     }
 
     async initialListing(number){
@@ -492,7 +492,7 @@ class Uniswap extends Component {
               <Card  bg="light" style={{ height: '92vh', align : 'center', color : '#b73859'}} >
                 <Card.Body style = {{overflowY : 'scroll'}}>
                   <Card.Title><h2> <b><BsCardChecklist/> &nbsp; Newest Token Table Of UNISWAP </b></h2> <hr/></Card.Title><br/>
-                    <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={10} pagesAmount={300} data={captureDataTable}   materialSearch  /><br/><br/>
+                    <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={20} pagesAmount={300} data={captureDataTable}   materialSearch  /><br/><br/>
                 </Card.Body>
               </Card>
         </div>
