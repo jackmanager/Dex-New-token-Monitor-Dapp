@@ -29,7 +29,7 @@ class Uniswap extends Component {
     }
 
     async componentWillMount() {
-            await this.initialListing(1000)
+            await this.initialListing(100)
             setInterval(() => {
               this.realTimeScanning(2)
             }, 10000);
@@ -63,26 +63,30 @@ class Uniswap extends Component {
 
           let tableData = {
             id              : index,
-            tokeninfo       : '',
+            tokenName       : '',
+            tokenTitle      : '',
+            releaseDate      : '',
+            owner           : '',
+            Distokeninfo       : '',
             tokenAddress    : tokenAddress,
             hash            : hash,
-            releaseDate     : '',
+            DisreleaseDate     : '',
             verifyStatus    : '',
-            verifyStatusDis : '',
+            DisverifyStatus : '',
             honeyPotStatus  : '',
             mintStatus      : '',
-            mintStatusDis   : '',
+            DismintStatus   : '',
             taxStatus       : '',
             renounceStatus  : '',
             liquidityStatus : '',
             liquidityAmount : '',
-            owner           : '',
             supply          : '',
             traded          : '',
             txCount         : '',
             pairAddress     :  pairAddress,
-            tokenAddressDis : '',
-            hashDis         : '',
+            DistokenAddress : '',
+            Dishash         : '',
+            DisOwner           : '',
             flag            : 'false'
           }
           let tableDatas = this.state.tableDatas
@@ -116,30 +120,34 @@ class Uniswap extends Component {
                     eventarray[0].returnValues[0] === bnbAddress? tokenAddress = eventarray[0].returnValues[1]: tokenAddress = eventarray[0].returnValues[0]
                     hash =  eventarray[0].transactionHash
                     pairAddress = eventarray[0].returnValues[2]
-
+                   
                     let tableData = {
-                      id              : this.state.tableDatas.length,
-                      tokeninfo       : '',
+                      id              :  this.state.tableDatas.length,
+                      tokenName       : '',
+                      tokenTitle      : '',
+                      releaseDate      : '',
+                      owner           : '',                      
                       tokenAddress    : tokenAddress,
                       hash            : hash,
-                      releaseDate     : '',
-                      verifyStatus    : '',
-                      verifyStatusDis : '',
+                      verifyStatus    : '',                     
                       honeyPotStatus  : '',
                       mintStatus      : '',
-                      mintStatusDis   : '',
                       taxStatus       : '',
                       renounceStatus  : '',
                       liquidityStatus : '',
                       liquidityAmount : '',
-                      owner           : '',
                       supply          : '',
                       traded          : '',
                       txCount         : '',
-                      pairAddress     : pairAddress,
-                      tokenAddressDis : '',
-                      hashDis         : '',
-                      flag            : 'true'
+                      pairAddress     :  pairAddress,
+                      Distokeninfo       : '',
+                      DisverifyStatus : '',
+                      DismintStatus   : '',
+                      DisreleaseDate     : '',
+                      DistokenAddress : '',
+                      Dishash         : '',
+                      DisOwner           : '',
+                      flag            : 'false'
                     }
                     let tableDatas = this.state.tableDatas
                     tableDatas.unshift(tableData)
@@ -197,17 +205,14 @@ class Uniswap extends Component {
             tokenName    = await tokenContract.methods.symbol().call()
             tokenTitle    = await tokenContract.methods.name().call()   
             tableDatas = this.state.tableDatas
-
+            tableDatas[this.state.tableDatas.length - id - 1].tokenName = tokenName
+            tableDatas[this.state.tableDatas.length - id - 1].tokenTitle = tokenTitle
             tableDatas[this.state.tableDatas.length - id - 1].tokeninfo = <p><b>{tokenTitle}</b><br/><b>({tokenName})</b></p> 
             tableDatas[this.state.tableDatas.length - id - 1].tokenAddressDis = <a href = {"https://etherscan.io/address/" + tokenAddress} target  = "_blank"><b>{tokenAddress.slice(0,5)}...{tokenAddress.slice(tokenAddress.length -3 ,tokenAddress.length)}</b></a>
             tableDatas[this.state.tableDatas.length - id - 1].hashDis = <a href = {"https://etherscan.io/tx/" + hash} target  = "_blank"><b>{hash.slice(0,5)}...{hash.slice(hash.length -3 ,hash.length)}</b></a>
             this.setState({
                 tabledatas : tableDatas
             })
-
- 
-// get timestamp 
-              
 // renounce check      ============================================================  
 
              try{
@@ -216,8 +221,6 @@ class Uniswap extends Component {
                 }catch(err){
                     owner = ""
                 }
-
-
                 if (owner === '0x0000000000000000000000000000000000000000'){
                     renounceStatus = 'false'
                 } else if (owner === ''){
@@ -227,8 +230,7 @@ class Uniswap extends Component {
                 }
               }catch(err){
                   renounceStatus =false
-              }    
-
+              }
               tableDatas = this.state.tableDatas
               if (renounceStatus === 'true'){
                   tableDatas[this.state.tableDatas.length - id - 1].renounceStatus = <p className='text-success'> <b>Good</b> </p>
@@ -237,8 +239,9 @@ class Uniswap extends Component {
               }  else {
                   tableDatas[this.state.tableDatas.length - id - 1].renounceStatus =  <p className='text-warning'> <b>Unknown</b> </p>
               }
+              tableDatas[this.state.tableDatas.length - id - 1].owner = owner
+              owner === '' ? tableDatas[this.state.tableDatas.length - id - 1].DisOwner = <p className='text-warning'> Unknown </p>:tableDatas[this.state.tableDatas.length - id - 1].DisOwner = <a href = {"https://etherscan.io/address/" + owner} target  = "_blank"><b>{owner.slice(0,6)}...{owner.slice(owner.length -3 ,owner.length)}</b></a>
 
-              owner === ''?tableDatas[this.state.tableDatas.length - id - 1].owner = <p className='text-warning'> Unknown </p>:tableDatas[this.state.tableDatas.length - id - 1].owner = <a href = {"https://etherscan.io/address/" + owner} target  = "_blank"><b>{owner.slice(0,6)}...{owner.slice(owner.length -3 ,owner.length)}</b></a>
               this.setState({
                 tabledatas : tableDatas
               })
@@ -248,16 +251,15 @@ class Uniswap extends Component {
               try{
                   supply = await tokenContract.methods.totalSupply().call()
                       supply = supply / 1
-                  }catch(err){
-                      supply =  " can't catch "
-                  }
+              }catch(err){
+                  supply =  " can't catch "
+              }
 
-                  
-                  tableDatas = this.state.tableDatas
-                  tableDatas[this.state.tableDatas.length - id - 1].supply = <p><b>{supply.toExponential(2)}</b></p>
-                  this.setState({
-                      tabledatas : tableDatas
-                  })
+              tableDatas = this.state.tableDatas
+              tableDatas[this.state.tableDatas.length - id - 1].supply = <p><b>{supply.toExponential(2)}</b></p>
+              this.setState({
+                  tabledatas : tableDatas
+              })
 
                   
   // verify check,  mint check ===============================================================
@@ -354,7 +356,7 @@ class Uniswap extends Component {
 
               
             tableDatas = this.state.tableDatas
-            tableDatas[this.state.tableDatas.length - id - 1].liquidityStatus = <p><b>{internationalNumberFormat.format(liquidityAmount)} $</b></p>
+            tableDatas[this.state.tableDatas.length - id - 1].liquidityStatus = internationalNumberFormat.format(liquidityAmount) + '$' 
             this.setState({
               tabledatas : tableDatas
             })
@@ -379,8 +381,8 @@ class Uniswap extends Component {
             txCount = countbuffer
             traded = internationalNumberFormat.format((tradedbuffer * ethPrice / Math.pow(10, 18)).toFixed(0))
             tableDatas = this.state.tableDatas
-            tableDatas[this.state.tableDatas.length - id - 1].txCount = <p><b>{txCount}</b></p>
-            tableDatas[this.state.tableDatas.length - id - 1].traded  = <p><b>{traded}$</b></p> 
+            tableDatas[this.state.tableDatas.length - id - 1].txCount = txCount
+            tableDatas[this.state.tableDatas.length - id - 1].traded  = traded + '$'
             this.setState({
                 tabledatas : tableDatas
             })
@@ -389,6 +391,8 @@ class Uniswap extends Component {
         }
     }
 
+
+// timestamp
     async getTimer(hash, id){
       let releaseDate
         try{
@@ -416,8 +420,10 @@ class Uniswap extends Component {
       }catch(err){
 
       }
+
       let tableDatas = this.state.tableDatas
-      tableDatas[this.state.tableDatas.length - id - 1].releaseDate = <p><b><BsStopwatch/>{releaseDate}</b></p> 
+      tableDatas[this.state.tableDatas.length - id - 1].releaseDate = releaseDate
+      tableDatas[this.state.tableDatas.length - id - 1].DisReleaseDate = <p><b><BsStopwatch/>{releaseDate}</b></p> 
       this.setState ({
         tableDatas : tableDatas
       })
@@ -444,13 +450,13 @@ class Uniswap extends Component {
           },
           {
             label : 'Listed Since',
-            field : 'releaseDate',
-            sort: 'disabled',
+            field : 'DisReleaseDate',
+            sort  : 'disabled',
           },
           {
             label : 'Owner',
-            field : 'owner',
-            sort: 'disabled',
+            field : 'DisOwner',
+            sort  : 'disabled',
           },
           {
             label : 'Supply',
@@ -459,7 +465,7 @@ class Uniswap extends Component {
           {
             label : 'Verify',
             field : 'verifyStatusDis',
-            sort: 'disabled',
+            sort  : 'disabled',
           },
           {
             label : 'Honeypot',
@@ -500,15 +506,12 @@ class Uniswap extends Component {
         rows : rowsCaptureTable,
       }
 
-
-
-
       return (
         <div>
               <Card  bg="light" style={{ height: '92vh', align : 'center', color : '#b73859'}} >
                 <Card.Body style = {{overflowY : 'scroll'}}>
                   <Card.Title><h2> <b><BsCardChecklist/> &nbsp; Newest Token Table Of UNISWAP </b></h2> <hr/></Card.Title><br/>
-                  <MDBDataTable small  materialSearch noBottomColumns responsive theadColor="indigo" entriesOptions={[5, 10, 20, 25, 50 , 100]} entries={50} pagesAmount={10}  data={captureDataTable} />
+                  <MDBDataTable small materialSearch noBottomColumns responsive theadColor="indigo" entriesOptions={[5, 10, 20, 25, 50 , 100]} entries={50} pagesAmount={10}  data={captureDataTable} hover/>
                 </Card.Body>
               </Card>
         </div>
