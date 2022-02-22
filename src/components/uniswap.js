@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import { Card } from 'react-bootstrap'
-import { MDBDataTableV5 } from 'mdbreact';
+import { MDBDataTable  } from 'mdbreact';
 import Web3 from 'web3';
 import './App.css';
 import {bscRPC, ERC20ABI,ROUTERABI, bnbAddress, routerAddress, factoryAddress, etherscanAPIKey, FactoryABI, usdtAddress} from './config'
 import { BsCardChecklist, BsStopwatch } from 'react-icons/bs';
+
+
 // In a node environment
 
 
@@ -37,6 +39,8 @@ class Uniswap extends Component {
             setInterval(() => {
               this.realTimeTimerUpdate()
             }, 2000);
+
+
     }
 
     async initialListing(number){
@@ -212,16 +216,28 @@ class Uniswap extends Component {
                 }catch(err){
                     owner = ""
                 }
-                if (owner === ''||owner === '0x0000000000000000000000000000000000000000'){
-                    renounceStatus = false
+
+
+                if (owner === '0x0000000000000000000000000000000000000000'){
+                    renounceStatus = 'false'
+                } else if (owner === ''){
+                    renounceStatus = 'unknown'
                 } else {
-                    renounceStatus = true
+                    renounceStatus = 'true'
                 }
               }catch(err){
                   renounceStatus =false
               }    
+
               tableDatas = this.state.tableDatas
-              renounceStatus ? tableDatas[this.state.tableDatas.length - id - 1].renounceStatus = <p className='text-success'> <b>Good</b> </p> : tableDatas[this.state.tableDatas.length - id - 1].renounceStatus =  <p className='text-danger'> <b>renounced</b> </p>
+              if (renounceStatus === 'true'){
+                  tableDatas[this.state.tableDatas.length - id - 1].renounceStatus = <p className='text-success'> <b>Good</b> </p>
+              }  else if (renounceStatus === 'false'){
+                  tableDatas[this.state.tableDatas.length - id - 1].renounceStatus =  <p className='text-danger'> <b>renounced</b> </p>
+              }  else {
+                  tableDatas[this.state.tableDatas.length - id - 1].renounceStatus =  <p className='text-warning'> <b>Unknown</b> </p>
+              }
+
               owner === ''?tableDatas[this.state.tableDatas.length - id - 1].owner = <p className='text-warning'> Unknown </p>:tableDatas[this.state.tableDatas.length - id - 1].owner = <a href = {"https://etherscan.io/address/" + owner} target  = "_blank"><b>{owner.slice(0,6)}...{owner.slice(owner.length -3 ,owner.length)}</b></a>
               this.setState({
                 tabledatas : tableDatas
@@ -456,13 +472,13 @@ class Uniswap extends Component {
             sort  : 'disabled',
           },
           {
-            label : 'Tax',
-            field : 'taxStatus',
+            label : 'Renounce',
+            field : 'renounceStatus',
             sort  : 'disabled',
           },
           {
-            label : 'Renounce',
-            field : 'renounceStatus',
+            label : 'Tax',
+            field : 'taxStatus',
             sort  : 'disabled',
           },
           {
@@ -492,7 +508,7 @@ class Uniswap extends Component {
               <Card  bg="light" style={{ height: '92vh', align : 'center', color : '#b73859'}} >
                 <Card.Body style = {{overflowY : 'scroll'}}>
                   <Card.Title><h2> <b><BsCardChecklist/> &nbsp; Newest Token Table Of UNISWAP </b></h2> <hr/></Card.Title><br/>
-                    <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={20} pagesAmount={300} data={captureDataTable}   materialSearch  /><br/><br/>
+                  <MDBDataTable small  materialSearch noBottomColumns responsive theadColor="indigo" entriesOptions={[5, 10, 20, 25, 50 , 100]} entries={50} pagesAmount={10}  data={captureDataTable} />
                 </Card.Body>
               </Card>
         </div>
