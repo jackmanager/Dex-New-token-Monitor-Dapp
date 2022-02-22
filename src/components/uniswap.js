@@ -29,7 +29,7 @@ class Uniswap extends Component {
     }
 
     async componentWillMount() {
-            await this.initialListing(100)
+            await this.initialListing(1000)
             setInterval(() => {
               this.realTimeScanning(2)
             }, 10000);
