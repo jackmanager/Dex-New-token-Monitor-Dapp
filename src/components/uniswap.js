@@ -5,6 +5,8 @@ import Web3 from 'web3';
 import './App.css';
 import {bscRPC, ERC20ABI,ROUTERABI, bnbAddress, routerAddress, factoryAddress, etherscanAPIKey, FactoryABI, usdtAddress} from './config'
 import { BsCardChecklist, BsStopwatch } from 'react-icons/bs';
+import {NotificationContainer, NotificationManager} from 'react-notifications';
+import 'react-notifications/lib/notifications.css';
 
 
 // In a node environment
@@ -15,6 +17,7 @@ const factoryContract =  new web3.eth.Contract(FactoryABI,factoryAddress);
 const wethContract    =  new web3.eth.Contract(ERC20ABI, bnbAddress)
 const routerContract  =  new web3.eth.Contract(ROUTERABI, routerAddress)
 const internationalNumberFormat = new Intl.NumberFormat('en-US')
+let pageBusy  = true;
 
 class Uniswap extends Component {
 
@@ -24,7 +27,8 @@ class Uniswap extends Component {
         isBotRuning   : false,
         tableDatas    : [],
         prevToken     : '', 
-        checkhash     : '0'
+        checkhash     : '0',
+        pageBusy      : true
       }
     }
 
@@ -100,6 +104,8 @@ class Uniswap extends Component {
     }
 
     async realTimeScanning(number){
+
+      
         console.log("real time token scanning")
         let tokenAddress
         let hash 
@@ -120,7 +126,10 @@ class Uniswap extends Component {
                     eventarray[0].returnValues[0] === bnbAddress? tokenAddress = eventarray[0].returnValues[1]: tokenAddress = eventarray[0].returnValues[0]
                     hash =  eventarray[0].transactionHash
                     pairAddress = eventarray[0].returnValues[2]
-                   
+
+                    let tokenContract=  new web3.eth.Contract(ERC20ABI,tokenAddress);
+                    let tokenName    = await tokenContract.methods.symbol().call();
+                    NotificationManager.success("New token " + tokenName + " is added To Uninswap Liquidity \n" )
                     let tableData = {
                       id              :  this.state.tableDatas.length,
                       tokenName       : '',
@@ -140,15 +149,16 @@ class Uniswap extends Component {
                       traded          : '',
                       txCount         : '',
                       pairAddress     :  pairAddress,
-                      Distokeninfo       : '',
+                      Distokeninfo    : '',
                       DisverifyStatus : '',
                       DismintStatus   : '',
-                      DisreleaseDate     : '',
+                      DisreleaseDate  : '',
                       DistokenAddress : '',
                       Dishash         : '',
-                      DisOwner           : '',
+                      DisOwner        : '',
                       flag            : 'false'
                     }
+                    
                     let tableDatas = this.state.tableDatas
                     tableDatas.unshift(tableData)
                     this.setState({
@@ -156,18 +166,14 @@ class Uniswap extends Component {
                     })
                     this.getData(tokenAddress, hash,  this.state.tableDatas.length - 1, pairAddress)
                     this.getTimer(hash, this.state.tableDatas.length - 1)
-                    setTimeout(() => {
-                      let record = this.state.tableDatas
-                      record[0].flag = false
-                      this.setState({
-                        tableDatas : record
-                      })
-                    }, 10000);
                 }
         }
     }
 
     async realTimeDataUpdate(){
+      if (this.state.pageBusy == false){
+        return
+      }
         console.log("data update!")
         for (let i = 0; i < this.state.tableDatas.length; i++) {
             this.getData(this.state.tableDatas[i].tokenAddress, this.state.tableDatas[i].hash, this.state.tableDatas[i].id, this.state.tableDatas[i].pairAddress)
@@ -177,6 +183,9 @@ class Uniswap extends Component {
 
     async realTimeTimerUpdate(){
       console.log("data update!")
+      if(pageBusy = false){
+        return
+      }
       for (let i = 0; i < this.state.tableDatas.length; i++) {
           this.getTimer(this.state.tableDatas[i].hash, this.state.tableDatas[i].id)
       }
@@ -391,7 +400,6 @@ class Uniswap extends Component {
         }
     }
 
-
 // timestamp
     async getTimer(hash, id){
       let releaseDate
@@ -429,6 +437,8 @@ class Uniswap extends Component {
       })
     }
 
+
+
     render() {
       var rowsCaptureTable = this.state.tableDatas
       const captureDataTable = {
@@ -446,7 +456,7 @@ class Uniswap extends Component {
           {
             label : 'Hash',
             field : 'hashDis',
-            sort: 'disabled',
+            sort  : 'disabled',
           },
           {
             label : 'Listed Since',
@@ -511,9 +521,10 @@ class Uniswap extends Component {
               <Card  bg="light" style={{ height: '92vh', align : 'center', color : '#b73859'}} >
                 <Card.Body style = {{overflowY : 'scroll'}}>
                   <Card.Title><h2> <b><BsCardChecklist/> &nbsp; Newest Token Table Of UNISWAP </b></h2> <hr/></Card.Title><br/>
-                  <MDBDataTable small materialSearch noBottomColumns responsive theadColor="indigo" entriesOptions={[5, 10, 20, 25, 50 , 100]} entries={50} pagesAmount={10}  data={captureDataTable} hover/>
+                  <MDBDataTable small materialSearch noBottomColumns responsive theadColor="indigo"  data={captureDataTable} onPageChange={ value => this.pageStatusSet()} entriesOptions={[100 ]} entries ={100} hover/>
                 </Card.Body>
               </Card>
+              <NotificationContainer/>
         </div>
       );
     }
