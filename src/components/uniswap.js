@@ -37,9 +37,11 @@ class Uniswap extends Component {
             setInterval(() => {
               this.realTimeScanning(2)
             }, 10000);
+
             setInterval(() => {
               this.realTimeDataUpdate()
-            }, 120000);
+            }, 60000);
+
             setInterval(() => {
               this.realTimeTimerUpdate()
             }, 2000);
@@ -90,6 +92,7 @@ class Uniswap extends Component {
             pairAddress     :  pairAddress,
             DistokenAddress : '',
             Dishash         : '',
+            honeyPotStatusDis : '',
             DisOwner           : '',
             flag            : 'false'
           }
@@ -98,17 +101,13 @@ class Uniswap extends Component {
           this.setState({
             tableDatas : tableDatas
           })
-            this.getData(tokenAddress, hash, index, pairAddress)
+            this.getData(tokenAddress, hash, index, pairAddress, false)
             this.getTimer(hash, index)
         }
     }
 
     async realTimeScanning(number){
         console.log("real time token scanning")
-
-        
-
-
         let tokenAddress
         let hash 
         let pairAddress
@@ -135,7 +134,7 @@ class Uniswap extends Component {
                     document.querySelector('tbody>tr:first-of-type').classList.add('new')
                     setTimeout(() => {
                       document.querySelector('tbody>tr:first-of-type').classList.remove("new") 
-                    }, 10000);
+                    }, 30000);
                     let tableData = {
                       id              :  this.state.tableDatas.length,
                       tokenName       : '',
@@ -162,6 +161,7 @@ class Uniswap extends Component {
                       DistokenAddress : '',
                       Dishash         : '',
                       DisOwner        : '',
+                      honeyPotStatusDis : '',
                       flag            : 'false'
                     }
                     
@@ -177,18 +177,17 @@ class Uniswap extends Component {
     }
 
     async realTimeDataUpdate(){
-      if (this.state.pageBusy == false){
+      if (this.state.pageBusy === false){
         return
       }
         console.log("data update!")
         for (let i = 0; i < this.state.tableDatas.length; i++) {
-            this.getData(this.state.tableDatas[i].tokenAddress, this.state.tableDatas[i].hash, this.state.tableDatas[i].id, this.state.tableDatas[i].pairAddress)
+            this.getData(this.state.tableDatas[i].tokenAddress, this.state.tableDatas[i].hash, this.state.tableDatas[i].id, this.state.tableDatas[i].pairAddress, true)
             console.log(i)
         }
     }
 
     async realTimeTimerUpdate(){
-      console.log("data update!")
       if(pageBusy = false){
         return
       }
@@ -197,7 +196,7 @@ class Uniswap extends Component {
       }
   }
 
-    async getData(tokenAddress, hash, id, pairAddress){
+    async getData(tokenAddress, hash, id, pairAddress, isUpdate){
         try{
             let tokenName
             let tokenTitle
@@ -254,6 +253,18 @@ class Uniswap extends Component {
               }  else {
                   tableDatas[this.state.tableDatas.length - id - 1].renounceStatus =  <p className='text-warning'> <b>Unknown</b> </p>
               }
+              console.log("asdsadsadasdsadadas")
+
+              if (isUpdate && owner !== tableDatas[this.state.tableDatas.length - id - 1].owner){
+                console.log("123123123213123123321233213213")
+                document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(5)').classList.add('new')
+                document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(10)').classList.add('new')
+                setTimeout(() => {
+                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(5)').classList.remove("new") 
+                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(10)').classList.remove("new") 
+                }, 30000);
+              }
+
               tableDatas[this.state.tableDatas.length - id - 1].owner = owner
               owner === '' ? tableDatas[this.state.tableDatas.length - id - 1].DisOwner = <p className='text-warning'> Unknown </p>:tableDatas[this.state.tableDatas.length - id - 1].DisOwner = <a href = {"https://etherscan.io/address/" + owner} target  = "_blank"><b>{owner.slice(0,6)}...{owner.slice(owner.length -3 ,owner.length)}</b></a>
 
@@ -338,6 +349,7 @@ class Uniswap extends Component {
                 .then(response => response.json())
                 .then(
                   async (response) => { 
+                    console.log(response)
                       honeyPotStatus = !response.IsHoneypot
                       buyTax = response.BuyTax
                       sellTax = response.SellTax
@@ -345,8 +357,17 @@ class Uniswap extends Component {
             }catch(err){
                 honeyPotStatus = false
             }
+
+            if (isUpdate && tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatus !== honeyPotStatus){
+                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(8)').classList.add('new')
+                  setTimeout(() => {
+                    document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(8)').classList.remove("new") 
+                  }, 30000);
+            }
+
             tableDatas = this.state.tableDatas
-            honeyPotStatus ? tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatus = <p className='text-success'> <b>Good</b> </p> : tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatus = <p className='text-danger'> <b>HoneyPot</b> </p>
+            tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatus = honeyPotStatus
+            honeyPotStatus ? tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatusDis = <p className='text-success'> <b>Good</b> </p> : tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatusDis = <p className='text-danger'> <b>HoneyPot</b> </p>
             tableDatas[this.state.tableDatas.length - id - 1].taxStatus = <p className='text-success'><b>Sell tax:{sellTax}% <br/>Buy Tax:{buyTax}% </b> </p>
 
             this.setState({
@@ -406,7 +427,6 @@ class Uniswap extends Component {
         }
     }
 
-// timestamp
     async getTimer(hash, id){
       let releaseDate
         try{
@@ -485,7 +505,7 @@ class Uniswap extends Component {
           },
           {
             label : 'Honeypot',
-            field : 'honeyPotStatus',
+            field : 'honeyPotStatusDis',
             sort  : 'disabled',
           },
           {
