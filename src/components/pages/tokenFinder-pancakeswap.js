@@ -3,24 +3,19 @@ import { Card } from 'react-bootstrap'
 import { MDBDataTable  } from 'mdbreact';
 import Web3 from 'web3';
 import './App.css';
-import {bscRPC, ERC20ABI,ROUTERABI, bnbAddress, routerAddress, factoryAddress, etherscanAPIKey, FactoryABI, usdtAddress} from './config'
+import {bscRPC, ERC20ABI,ROUTERABI, bnbAddress, pancakeRouterAddress, panncakeFactoryAddress, bscscanAPIKey, FactoryABI, bscUsdtAddress} from '../config'
 import { BsCardChecklist, BsStopwatch } from 'react-icons/bs';
 import {NotificationContainer, NotificationManager} from 'react-notifications';
 import 'react-notifications/lib/notifications.css';
-
-
 // In a node environment
-
-
 let web3 = new Web3(bscRPC);
-const factoryContract =  new web3.eth.Contract(FactoryABI,factoryAddress);
+const factoryContract =  new web3.eth.Contract(FactoryABI,panncakeFactoryAddress);
 const wethContract    =  new web3.eth.Contract(ERC20ABI, bnbAddress)
-const routerContract  =  new web3.eth.Contract(ROUTERABI, routerAddress)
+const routerContract  =  new web3.eth.Contract(ROUTERABI, pancakeRouterAddress)
 const internationalNumberFormat = new Intl.NumberFormat('en-US')
 let pageBusy  = true;
 
-class Uniswap extends Component {
-
+class Pancakeswap extends Component {
     constructor(props){
       super(props)
       this.state={
@@ -28,25 +23,26 @@ class Uniswap extends Component {
         tableDatas    : [],
         prevToken     : '', 
         checkhash     : '0',
-        pageBusy      : true
+        pageBusy      : true,
+        scanningBlockNumber : 0,
       }
     }
 
     async componentWillMount() {
-            await this.initialListing(1000)
-            setInterval(() => {
-              this.realTimeScanning(2)
-            }, 10000);
-
-            setInterval(() => {
-              this.realTimeDataUpdate()
-            }, 60000);
-
-            setInterval(() => {
-              this.realTimeTimerUpdate()
-            }, 2000);
-
-
+            // await this.initialListing(100)
+            // let blocknumber = await web3.eth.getBlockNumber()
+            // this.setState({
+            //   scanningBlockNumber : blocknumber
+            // })
+            // setInterval(() => {
+            //   this.realTimeScanning()
+            // }, 30000);
+            // setInterval(() => {
+            //   this.realTimeDataUpdate()
+            // }, 60000);
+            // setInterval(() => {
+            //   this.realTimeTimerUpdate()
+            // }, 2000);
     }
 
     async initialListing(number){
@@ -106,16 +102,22 @@ class Uniswap extends Component {
         }
     }
 
-    async realTimeScanning(number){
+    async realTimeScanning(){
         console.log("real time token scanning")
         let tokenAddress
         let hash 
         let pairAddress
-        let blocknumber = await web3.eth.getBlockNumber() - number
+        
         let eventarray = await factoryContract.getPastEvents('PairCreated',{
-            fromBlock : blocknumber,
+            fromBlock : this.state.scanningBlockNumber + 1,
             toBlock : 'latest'
         })
+
+        let blocknumber = await web3.eth.getBlockNumber()
+        this.setState({
+            scanningBlockNumber : blocknumber
+        })
+
         if(eventarray.length === 0){
             console.log("new token scanning result: nothing")
             return
@@ -127,7 +129,6 @@ class Uniswap extends Component {
                     eventarray[0].returnValues[0] === bnbAddress? tokenAddress = eventarray[0].returnValues[1]: tokenAddress = eventarray[0].returnValues[0]
                     hash =  eventarray[0].transactionHash
                     pairAddress = eventarray[0].returnValues[2]
-
                     let tokenContract=  new web3.eth.Contract(ERC20ABI,tokenAddress);
                     let tokenName    = await tokenContract.methods.symbol().call();
                     NotificationManager.success("New token " + tokenName + " is added To Uninswap Liquidity \n" )
@@ -253,15 +254,14 @@ class Uniswap extends Component {
               }  else {
                   tableDatas[this.state.tableDatas.length - id - 1].renounceStatus =  <p className='text-warning'> <b>Unknown</b> </p>
               }
-              console.log("asdsadsadasdsadadas")
+
 
               if (isUpdate && owner !== tableDatas[this.state.tableDatas.length - id - 1].owner){
-                console.log("123123123213123123321233213213")
                 document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(5)').classList.add('new')
                 document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(10)').classList.add('new')
                 setTimeout(() => {
-                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(5)').classList.remove("new") 
-                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(10)').classList.remove("new") 
+                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(5)').classList.remove('new') 
+                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(10)').classList.remove('new') 
                 }, 30000);
               }
 
@@ -294,7 +294,8 @@ class Uniswap extends Component {
                   verifyStatus = true
                   mintStatus = this.state.tableDatas[this.state.tableDatas.length - id - 1].mintStatus
                 } else {
-                    let bscURL = 'https://api.etherscan.com/api?module=contract&action=getsourcecode&address=' + tokenAddress + '&apikey=' + etherscanAPIKey;
+                    let bscURL = 'https://api.bscscan.com/api?module=contract&action=getsourcecode&address=' + tokenAddress + '&apikey=' + bscscanAPIKey;
+
                     await fetch (bscURL)
                     .then(response => response.json())
                     .then(
@@ -340,11 +341,10 @@ class Uniswap extends Component {
                 tabledatas : tableDatas
             })
 
-
-
   // honeypot check ================================================================
             try{
-                let honeypot_url = 'https://aywt3wreda.execute-api.eu-west-1.amazonaws.com/default/IsHoneypot?chain=eth&token=' + tokenAddress 
+                let honeypot_url = 'https://aywt3wreda.execute-api.eu-west-1.amazonaws.com/default/IsHoneypot?chain=bsc2&token=' + tokenAddress 
+
                 await fetch(honeypot_url)
                 .then(response => response.json())
                 .then(
@@ -374,18 +374,14 @@ class Uniswap extends Component {
                 tabledatas : tableDatas
             })
 
- 
-
   // liquidity check
             try{
                 let poolAddress     = await factoryContract.methods.getPair(tokenAddress, bnbAddress).call()
                 let ethliquidityAmount =  await wethContract.methods.balanceOf(poolAddress).call()
                 ethliquidityAmount = (ethliquidityAmount / 1000000000000000000)
-                let usdliquidityAmount =  await routerContract.methods.getAmountsOut("1000000000000000000", [bnbAddress,usdtAddress]).call()
-                ethPrice = usdliquidityAmount[1] / Math.pow(10,6)
-                liquidityAmount = (usdliquidityAmount[1] * ethliquidityAmount/ 500000).toFixed(0)
-                
-
+                let usdliquidityAmount =  await routerContract.methods.getAmountsOut("1000000000000000000", [bnbAddress,bscUsdtAddress]).call()
+                ethPrice = usdliquidityAmount[1] / Math.pow(10,18)
+                liquidityAmount = (usdliquidityAmount[1] * ethliquidityAmount/ (5 *Math.pow(10,17))).toFixed(0)
             }catch(err){
             }
 
@@ -544,15 +540,16 @@ class Uniswap extends Component {
 
       return (
         <div>
-              <Card  bg="light" style={{ height: '92vh', align : 'center', color : '#b73859'}} >
-                <Card.Body style = {{overflowY : 'scroll'}}>
-                  <Card.Title><h2> <b><BsCardChecklist/> &nbsp; Newest Token Table Of UNISWAP </b></h2> <hr/></Card.Title><br/>
-                  <MDBDataTable small materialSearch noBottomColumns responsive theadColor="indigo"  data={captureDataTable} onSort={ value => console.log(value) } entriesOptions={[10, 20, 50 ,100 ]} entries ={10} hover/>
-                </Card.Body>
-              </Card>
-              <NotificationContainer/>
+          <br/>
+          <Card  bg="light" style={{ height: '92vh', align : 'center', color : '#b73859'}} >
+            <Card.Body style = {{overflowY : 'scroll'}}>
+              <Card.Title><h2> <b><BsCardChecklist/> &nbsp; Newest Token Table Of PANCAKE SWAP </b></h2> <hr/></Card.Title><br/>
+              <MDBDataTable small materialSearch noBottomColumns responsive theadColor="indigo"  data={captureDataTable} entriesOptions={[10, 20, 50 ,100 ]} entries ={10} hover/>
+            </Card.Body>
+          </Card>
+          <NotificationContainer/>
         </div>
       );
     }
 }
-export default Uniswap;
+export default Pancakeswap;
