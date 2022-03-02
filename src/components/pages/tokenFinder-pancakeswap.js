@@ -29,7 +29,7 @@ class Pancakeswap extends Component {
     }
 
     async componentWillMount() {
-            // await this.initialListing(100)
+            await this.initialListing(100)
             // let blocknumber = await web3.eth.getBlockNumber()
             // this.setState({
             //   scanningBlockNumber : blocknumber
