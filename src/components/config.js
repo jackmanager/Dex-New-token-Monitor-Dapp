@@ -10,7 +10,7 @@ export const bnbAddress             = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095
 export const panncakeFactoryAddress = "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73"
 export const pancakeRouterAddress   = "0x10ED43C718714eb63d5aA57B78B54704E256024E"
 export const bscUsdtAddress         = '0x55d398326f99059fF775485246999027B3197955'
-export const bscscanAPIKey          =  '6YGD9FTCRTKA96S7Q1JP5P2MMZAZSV5I9I'
+export const bscscanAPIKey          =  6YGD9FTCRTKA96S7Q1JP5P2MMZAZSV5I9I'
 
 
 

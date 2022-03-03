@@ -48,8 +48,6 @@ class Uniswap extends Component {
             setInterval(() => {
               this.realTimeTimerUpdate()
             }, 2000);
-
-
     }
 
     async initialListing(number){
@@ -61,13 +59,15 @@ class Uniswap extends Component {
         })
         console.log(eventarray)
 
-
         let tokenAddress
         let hash 
         let pairAddress
         
         for (let index = eventarray.length - 1; index > - 1; index--) {
           eventarray[index].returnValues[0] === ethAddress? tokenAddress = eventarray[index].returnValues[1]: tokenAddress = eventarray[index].returnValues[0]
+          if (tokenAddress === ethUsdtAddress){
+            return
+          }
           hash =  eventarray[index].transactionHash
           pairAddress = eventarray[index].returnValues[2]
 
@@ -135,6 +135,9 @@ class Uniswap extends Component {
                 if (hash === this.state.tableDatas[0].hash){  
                 } else {
                     eventarray[0].returnValues[0] === ethAddress? tokenAddress = eventarray[0].returnValues[1]: tokenAddress = eventarray[0].returnValues[0]
+                    if (tokenAddress === ethUsdtAddress){
+                      return
+                    }
                     hash =  eventarray[0].transactionHash
                     pairAddress = eventarray[0].returnValues[2]
                     let tokenContract=  new web3.eth.Contract(ERC20ABI,tokenAddress);
