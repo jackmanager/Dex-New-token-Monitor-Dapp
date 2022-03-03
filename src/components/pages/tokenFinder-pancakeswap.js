@@ -139,7 +139,7 @@ class Pancakeswap extends Component {
                     pairAddress = eventarray[0].returnValues[2]
                     let tokenContract=  new web3.eth.Contract(ERC20ABI,tokenAddress);
                     let tokenName    = await tokenContract.methods.symbol().call();
-                    NotificationManager.success("New token " + tokenName + " is added To Uninswap Liquidity \n" )
+                    NotificationManager.success("New token " + tokenName + " is added To PancakeSwap Liquidity \n" )
                     document.querySelector('tbody>tr:first-of-type').classList.add('new')
                     setTimeout(() => {
                       document.querySelector('tbody>tr:first-of-type').classList.remove("new") 
