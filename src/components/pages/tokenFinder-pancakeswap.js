@@ -400,8 +400,9 @@ class Pancakeswap extends Component {
             })
 
   // token transferred count trad amount
+            let blockNumber = await  web3.eth.getBlockNumber()
             let transferEventArray = await tokenContract.getPastEvents('Transfer',{
-                fromBlock : 0,
+                fromBlock : blockNumber - 1000,
                 toBlock : 'latest'
             })
             let countbuffer  = 0
