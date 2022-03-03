@@ -5,7 +5,7 @@ import {
 } from "react-router-dom";
 import { Button } from 'react-bootstrap';
 import UniswapImage from '../../asset/uniswap.jpg';
-import SushiswapImage from '../../asset/sushiswap.png';
+import PancakeswapImage from '../../asset/pancakeswap.jpg';
 
 class TokenListingTab extends Component {
 
@@ -18,7 +18,7 @@ class TokenListingTab extends Component {
                 </Link> 
                 <br/>
                 <Link to = "/token-listings/pancakeswap">
-                    <Button><img src={SushiswapImage} /></Button>
+                    <Button><img src={PancakeswapImage} /></Button>
                 </Link> 
             </div>
         );
