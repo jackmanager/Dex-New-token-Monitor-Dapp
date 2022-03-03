@@ -30,19 +30,19 @@ class Pancakeswap extends Component {
 
     async componentWillMount() {
             await this.initialListing(100)
-            // let blocknumber = await web3.eth.getBlockNumber()
-            // this.setState({
-            //   scanningBlockNumber : blocknumber
-            // })
-            // setInterval(() => {
-            //   this.realTimeScanning()
-            // }, 30000);
-            // setInterval(() => {
-            //   this.realTimeDataUpdate()
-            // }, 60000);
-            // setInterval(() => {
-            //   this.realTimeTimerUpdate()
-            // }, 2000);
+             let blocknumber = await web3.eth.getBlockNumber()
+             this.setState({
+               scanningBlockNumber : blocknumber
+             })
+             setInterval(() => {
+               this.realTimeScanning()
+             }, 30000);
+             setInterval(() => {
+               this.realTimeDataUpdate()
+             }, 60000);
+             setInterval(() => {
+               this.realTimeTimerUpdate()
+             }, 2000);
     }
 
     async initialListing(number){
