@@ -15,7 +15,7 @@ class Main extends Component {
         return (
             <>
              <Col lg="12" >
-                    <Switch>
+                <Switch>
                         <Route path="/token-listings/uniswap">
                             <Uniswap />
                         </Route>
@@ -24,13 +24,6 @@ class Main extends Component {
                         </Route>
                     </Switch>
                 </Col>
-
-                <Link to = "/token-listings/uniswap">
-                    <Button>Uniswap</Button>
-                </Link> 
-                <Link to = "/token-listings/pancakeswap">
-                    <Button>Pancakeswap</Button>
-                </Link> 
             </>
         );
     }

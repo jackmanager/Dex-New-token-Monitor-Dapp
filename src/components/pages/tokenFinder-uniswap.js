@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Card } from 'react-bootstrap'
 import { MDBDataTable  } from 'mdbreact';
 import Web3 from 'web3';
-import './App.css';
+import './swaptable.css';
 import {ethRPC, ERC20ABI, ROUTERABI, ethAddress, uniswapRouterAddress, uniswapFactoryAddress, etherscanAPIKey, FactoryABI, ethUsdtAddress} from '../config'
 import { BsCardChecklist, BsStopwatch } from 'react-icons/bs';
 import {NotificationContainer, NotificationManager} from 'react-notifications';
@@ -45,9 +45,11 @@ class Uniswap extends Component {
               this.realTimeDataUpdate()
             }, 60000);
 
-            setInterval(() => {
-              this.realTimeTimerUpdate()
-            }, 2000);
+            setTimeout(() => {
+              setInterval(() => {
+                this.realTimeTimerUpdate()
+              }, 2000);
+             }, 10000);  
     }
 
     async initialListing(number){
@@ -445,16 +447,32 @@ class Uniswap extends Component {
           let blocknumber = timetransaction.blockNumber
           let timeblock = await web3.eth.getBlock(blocknumber)
           let releasetime = timeblock.timestamp
-          let sincetime = Math.floor(Date.now() / 1000) - releasetime
-          let hour   = Math.floor(sincetime / 3600)
-          let minute = Math.floor((sincetime - 3600 * hour)/60)
-          let second = Math.floor (sincetime % 60)
+
+          let sincetime =  Math.floor(Date.now() / 1000) - releasetime + 60
+          let symbol
+          let hour   
+          let minute 
+          let second 
+          
+          if (sincetime >= 0){
+            symbol = ""
+            hour   = Math.floor(sincetime / 3600)
+            minute = Math.floor((sincetime - 3600 * hour)/60)
+            second = Math.floor (sincetime % 60)
+          } else {
+            sincetime = 0 - sincetime
+            symbol = "-"
+            hour   = Math.floor(sincetime / 3600)
+            minute = Math.floor((sincetime - 3600 * hour)/60)
+            second = Math.floor (sincetime % 60)
+          }
+          
 
 
           if (hour !== 0){
-            releaseDate = hour + 'h '
+            releaseDate =symbol + hour + 'h '
           }  else {
-            releaseDate = ''
+            releaseDate = symbol + ''
           }
           if (minute !== 0 ){
             releaseDate = releaseDate + minute + 'm '
