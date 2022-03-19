@@ -14,12 +14,12 @@ class TokenListingTab extends Component {
             <div>
                 <br/>
                 <Link to = "/token-listings/uniswap">
-                    <Button><img src={UniswapImage} /></Button>
-                </Link> 
+                    <Button><img alt="uniswap" src={UniswapImage} /></Button>
+                </Link>
                 <br/>
                 <Link to = "/token-listings/pancakeswap">
-                    <Button><img src={PancakeswapImage} /></Button>
-                </Link> 
+                    <Button><img alt="pancakeswap" src={PancakeswapImage} /></Button>
+                </Link>
             </div>
         );
     }

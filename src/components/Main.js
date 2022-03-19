@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
-import {  Col, Button } from 'react-bootstrap';
+import {  Col } from 'react-bootstrap'; // , Button
 import {
     Switch,
     Route,
-    Link
+    // Link
 } from "react-router-dom";
 import Uniswap from './pages/tokenFinder-uniswap';
 import Pancakeswap from './pages/tokenFinder-pancakeswap';

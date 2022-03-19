@@ -13,7 +13,7 @@ const factoryContract =  new web3.eth.Contract(FactoryABI,panncakeFactoryAddress
 const wethContract    =  new web3.eth.Contract(ERC20ABI, bnbAddress)
 const routerContract  =  new web3.eth.Contract(ROUTERABI, pancakeRouterAddress)
 const internationalNumberFormat = new Intl.NumberFormat('en-US')
-let pageBusy  = true;
+// let pageBusy  = true
 
 class Pancakeswap extends Component {
     constructor(props){
@@ -21,7 +21,7 @@ class Pancakeswap extends Component {
       this.state={
         isBotRuning   : false,
         tableDatas    : [],
-        prevToken     : '', 
+        prevToken     : '',
         checkhash     : '0',
         pageBusy      : true,
         scanningBlockNumber : 0,
@@ -44,7 +44,7 @@ class Pancakeswap extends Component {
               setInterval(() => {
                 this.realTimeTimerUpdate()
               }, 2000);
-             }, 10000);  
+             }, 10000);
     }
 
     async initialListing(number){
@@ -57,9 +57,9 @@ class Pancakeswap extends Component {
         console.log(eventarray)
 
         let tokenAddress
-        let hash 
+        let hash
         let pairAddress
-        
+
         for (let index = eventarray.length - 1; index > - 1; index--) {
           eventarray[index].returnValues[0] === bnbAddress? tokenAddress = eventarray[index].returnValues[1]: tokenAddress = eventarray[index].returnValues[0]
           if(tokenAddress=== bscUsdtAddress){
@@ -110,9 +110,9 @@ class Pancakeswap extends Component {
     async realTimeScanning(){
         console.log("real time token scanning")
         let tokenAddress
-        let hash 
+        let hash
         let pairAddress
-        
+
         let eventarray = await factoryContract.getPastEvents('PairCreated',{
             fromBlock : this.state.scanningBlockNumber + 1,
             toBlock : 'latest'
@@ -128,8 +128,8 @@ class Pancakeswap extends Component {
             return
         } else {
             console.log("new token scanning result: ", eventarray.length)
-                hash =  eventarray[0].transactionHash       
-                if (hash === this.state.tableDatas[0].hash){  
+                hash =  eventarray[0].transactionHash
+                if (hash === this.state.tableDatas[0].hash){
                 } else {
                     eventarray[0].returnValues[0] === bnbAddress? tokenAddress = eventarray[0].returnValues[1]: tokenAddress = eventarray[0].returnValues[0]
                     if (tokenAddress === bscUsdtAddress){
@@ -142,17 +142,17 @@ class Pancakeswap extends Component {
                     NotificationManager.success("New token " + tokenName + " is added To PancakeSwap Liquidity \n" )
                     document.querySelector('tbody>tr:first-of-type').classList.add('new')
                     setTimeout(() => {
-                      document.querySelector('tbody>tr:first-of-type').classList.remove("new") 
+                      document.querySelector('tbody>tr:first-of-type').classList.remove("new")
                     }, 30000);
                     let tableData = {
                       id              :  this.state.tableDatas.length,
                       tokenName       : '',
                       tokenTitle      : '',
                       releaseDate      : '',
-                      owner           : '',                      
+                      owner           : '',
                       tokenAddress    : tokenAddress,
                       hash            : hash,
-                      verifyStatus    : '',                     
+                      verifyStatus    : '',
                       honeyPotStatus  : '',
                       mintStatus      : '',
                       taxStatus       : '',
@@ -173,7 +173,7 @@ class Pancakeswap extends Component {
                       honeyPotStatusDis : '',
                       flag            : 'false'
                     }
-                    
+
                     let tableDatas = this.state.tableDatas
                     tableDatas.unshift(tableData)
                     this.setState({
@@ -197,7 +197,7 @@ class Pancakeswap extends Component {
     }
 
     async realTimeTimerUpdate(){
-      if(pageBusy = false){
+      if(false){
         return
       }
       for (let i = 0; i < this.state.tableDatas.length; i++) {
@@ -220,23 +220,23 @@ class Pancakeswap extends Component {
             let supply
             let traded
             let txCount
-            let releaseDate
+            // let releaseDate
             let tableDatas
             let ethPrice
 
             let tokenContract=  new web3.eth.Contract(ERC20ABI,tokenAddress);
             tokenName    = await tokenContract.methods.symbol().call()
-            tokenTitle    = await tokenContract.methods.name().call()   
+            tokenTitle    = await tokenContract.methods.name().call()
             tableDatas = this.state.tableDatas
             tableDatas[this.state.tableDatas.length - id - 1].tokenName = tokenName
             tableDatas[this.state.tableDatas.length - id - 1].tokenTitle = tokenTitle
-            tableDatas[this.state.tableDatas.length - id - 1].tokeninfo = <p><b>{tokenTitle}</b><br/><b>({tokenName})</b></p> 
-            tableDatas[this.state.tableDatas.length - id - 1].tokenAddressDis = <a href = {"https://etherscan.io/address/" + tokenAddress} target  = "_blank"><b>{tokenAddress.slice(0,5)}...{tokenAddress.slice(tokenAddress.length -3 ,tokenAddress.length)}</b></a>
-            tableDatas[this.state.tableDatas.length - id - 1].hashDis = <a href = {"https://etherscan.io/tx/" + hash} target  = "_blank"><b>{hash.slice(0,5)}...{hash.slice(hash.length -3 ,hash.length)}</b></a>
+            tableDatas[this.state.tableDatas.length - id - 1].tokeninfo = <p><b>{tokenTitle}</b><br/><b>({tokenName})</b></p>
+            tableDatas[this.state.tableDatas.length - id - 1].tokenAddressDis = <a href = {"https://etherscan.io/address/" + tokenAddress}><b>{tokenAddress.slice(0,5)}...{tokenAddress.slice(tokenAddress.length -3 ,tokenAddress.length)}</b></a>
+            tableDatas[this.state.tableDatas.length - id - 1].hashDis = <a href = {"https://etherscan.io/tx/" + hash}><b>{hash.slice(0,5)}...{hash.slice(hash.length -3 ,hash.length)}</b></a>
             this.setState({
                 tabledatas : tableDatas
             })
-// renounce check      ============================================================  
+// renounce check      ============================================================
 
              try{
                 try {
@@ -268,19 +268,19 @@ class Pancakeswap extends Component {
                 document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(5)').classList.add('new')
                 document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(10)').classList.add('new')
                 setTimeout(() => {
-                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(5)').classList.remove('new') 
-                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(10)').classList.remove('new') 
+                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(5)').classList.remove('new')
+                  document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(10)').classList.remove('new')
                 }, 30000);
               }
 
               tableDatas[this.state.tableDatas.length - id - 1].owner = owner
-              owner === '' ? tableDatas[this.state.tableDatas.length - id - 1].DisOwner = <p className='text-warning'> Unknown </p>:tableDatas[this.state.tableDatas.length - id - 1].DisOwner = <a href = {"https://etherscan.io/address/" + owner} target  = "_blank"><b>{owner.slice(0,6)}...{owner.slice(owner.length -3 ,owner.length)}</b></a>
+              owner === '' ? tableDatas[this.state.tableDatas.length - id - 1].DisOwner = <p className='text-warning'> Unknown </p>:tableDatas[this.state.tableDatas.length - id - 1].DisOwner = <a href = {"https://etherscan.io/address/" + owner}><b>{owner.slice(0,6)}...{owner.slice(owner.length -3 ,owner.length)}</b></a>
 
               this.setState({
                 tabledatas : tableDatas
               })
-   
-              
+
+
 // total supply check
               try{
                   supply = await tokenContract.methods.totalSupply().call()
@@ -295,7 +295,7 @@ class Pancakeswap extends Component {
                   tabledatas : tableDatas
               })
 
-                  
+
   // verify check,  mint check ===============================================================
             try{
                 if( this.state.tableDatas[this.state.tableDatas.length - id - 1].verifyStatus === true) {
@@ -322,41 +322,41 @@ class Pancakeswap extends Component {
                                         }
                                     }catch(err){
                                         mintStatus = "Non-mintable"
-                                    }   
+                                    }
                                 }
                             }catch(err){
                                 verifyStatus = false
                             }
                     })
-                } 
+                }
             }catch(err){
               verifyStatus = false
               mintStatus = "Non-M"
-            } 
+            }
 
             tableDatas = this.state.tableDatas
             tableDatas[this.state.tableDatas.length - id - 1].mintStatus = mintStatus
             tableDatas[this.state.tableDatas.length - id - 1].verifyStatus = verifyStatus
             if (mintStatus === 'unknown'){
-                tableDatas[this.state.tableDatas.length - id - 1].mintStatusDis = <p className='text-warning'> <b>Unknown</b> </p> 
+                tableDatas[this.state.tableDatas.length - id - 1].mintStatusDis = <p className='text-warning'> <b>Unknown</b> </p>
             }else if(mintStatus === 'Non-mintable'){
                 tableDatas[this.state.tableDatas.length - id - 1].mintStatusDis = <p className='text-success'> <b>Non-Mintable</b> </p>
             } else {
-                tableDatas[this.state.tableDatas.length - id - 1].mintStatusDis = <p className='text-danger'> <b>Mintable</b> </p> 
+                tableDatas[this.state.tableDatas.length - id - 1].mintStatusDis = <p className='text-danger'> <b>Mintable</b> </p>
             }
-            verifyStatus ? tableDatas[this.state.tableDatas.length - id - 1].verifyStatusDis = <p className='text-success'> <b>Verified</b> </p> :  tableDatas[this.state.tableDatas.length - id - 1].verifyStatusDis = <p className='text-danger'> <b>Unverified</b> </p> 
+            verifyStatus ? tableDatas[this.state.tableDatas.length - id - 1].verifyStatusDis = <p className='text-success'> <b>Verified</b> </p> :  tableDatas[this.state.tableDatas.length - id - 1].verifyStatusDis = <p className='text-danger'> <b>Unverified</b> </p>
             this.setState({
                 tabledatas : tableDatas
             })
 
   // honeypot check ================================================================
             try{
-                let honeypot_url = 'https://aywt3wreda.execute-api.eu-west-1.amazonaws.com/default/IsHoneypot?chain=bsc2&token=' + tokenAddress 
+                let honeypot_url = 'https://aywt3wreda.execute-api.eu-west-1.amazonaws.com/default/IsHoneypot?chain=bsc2&token=' + tokenAddress
 
                 await fetch(honeypot_url)
                 .then(response => response.json())
                 .then(
-                  async (response) => { 
+                  async (response) => {
                     console.log(response)
                       honeyPotStatus = !response.IsHoneypot
                       buyTax = response.BuyTax
@@ -369,7 +369,7 @@ class Pancakeswap extends Component {
             if (isUpdate && tableDatas[this.state.tableDatas.length - id - 1].honeyPotStatus !== honeyPotStatus){
                   document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(8)').classList.add('new')
                   setTimeout(() => {
-                    document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(8)').classList.remove("new") 
+                    document.querySelector('tbody>tr:nth-of-type('+(this.state.tableDatas.length - id) +')>td:nth-of-type(8)').classList.remove("new")
                   }, 30000);
             }
 
@@ -394,9 +394,9 @@ class Pancakeswap extends Component {
             }
 
 
-              
+
             tableDatas = this.state.tableDatas
-            tableDatas[this.state.tableDatas.length - id - 1].liquidityStatus = internationalNumberFormat.format(liquidityAmount) + '$' 
+            tableDatas[this.state.tableDatas.length - id - 1].liquidityStatus = internationalNumberFormat.format(liquidityAmount) + '$'
             this.setState({
               tabledatas : tableDatas
             })
@@ -442,10 +442,10 @@ class Pancakeswap extends Component {
 
           let sincetime =  Math.floor(Date.now() / 1000) - releasetime + 60
           let symbol
-          let hour   
-          let minute 
-          let second 
-          
+          let hour
+          let minute
+          let second
+
           if (sincetime >= 0){
             symbol = ""
             hour   = Math.floor(sincetime / 3600)
@@ -458,7 +458,7 @@ class Pancakeswap extends Component {
             minute = Math.floor((sincetime - 3600 * hour)/60)
             second = Math.floor (sincetime % 60)
           }
-          
+
 
 
           if (hour !== 0){
@@ -468,7 +468,7 @@ class Pancakeswap extends Component {
           }
           if (minute !== 0 ){
             releaseDate = releaseDate + minute + 'm '
-          }   
+          }
           if (second !== 0){
             releaseDate = releaseDate + second + 's'
           }
@@ -478,7 +478,7 @@ class Pancakeswap extends Component {
 
       let tableDatas = this.state.tableDatas
       tableDatas[this.state.tableDatas.length - id - 1].releaseDate = releaseDate
-      tableDatas[this.state.tableDatas.length - id - 1].DisReleaseDate = <p><b><BsStopwatch/>{releaseDate}</b></p> 
+      tableDatas[this.state.tableDatas.length - id - 1].DisReleaseDate = <p><b><BsStopwatch/>{releaseDate}</b></p>
       this.setState ({
         tableDatas : tableDatas
       })
